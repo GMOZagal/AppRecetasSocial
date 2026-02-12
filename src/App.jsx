@@ -3,6 +3,7 @@ import Navbar from './components/Navbar';
 import Feed from './components/Feed';
 import CreateRecipe from './components/CreateRecipe';
 import Profile from './components/Profile';
+import Explore from './components/Explore';
 
 function App() {
   const [currentView, setCurrentView] = useState('feed');
@@ -41,6 +42,11 @@ function App() {
           {/* 3. VISTA PERFIL */}
           {currentView === 'profile' && (
              <Profile />
+          )}
+
+          {/*VISTA EXPLORAR */}
+          {currentView === 'explore' && (
+            <Explore />
           )}
 
         </div>

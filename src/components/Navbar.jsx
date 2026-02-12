@@ -34,6 +34,13 @@ const Navbar = ({ onNavigate }) => {
             >
               Inicio
             </button>
+
+            <button
+              onClick={() => onNavigate('explore')}
+              className='text-gray-700 hover:text-orange-500 px-3 py-2 rounded-md text-sm font-medium transition'
+              >
+                Explorar
+            </button>
             
             <button 
               onClick={() => onNavigate('create')} 
@@ -93,6 +100,12 @@ const Navbar = ({ onNavigate }) => {
               className="w-full text-left text-gray-900 hover:text-orange-500 block px-3 py-2 rounded-md text-base font-medium"
             >
               Inicio
+            </button>
+            <button 
+              onClick={() => handleMobileNavigate('explore')}
+              className="w-full text-left text-gray-900 hover:text-orange-500 block px-3 py-2 rounded-md text-base font-medium"
+            >
+              Explorar
             </button>
             <button 
               onClick={() => handleMobileNavigate('create')}
