@@ -1,0 +1,109 @@
+// This is your Prisma schema file.
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Usuario {
+  id           Int      @id @default(autoincrement())
+  username     String   @unique
+  email        String   @unique
+  passwordHash String   @map("password_hash")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+  
+  // MFA (Autenticación de múltiples factores)
+  otpCode      String?  @map("otp_code")
+  otpExpiresAt DateTime? @map("otp_expires_at")
+  totpSecret   String?  @map("totp_secret") // Para Google Authenticator/Authy
+  mfaEnabled   Boolean  @default(false) @map("mfa_enabled")
+
+  // Preferencias de usuario
+  tema         String   @default("light")
+  idioma       String   @default("es")
+
+  // Control de Acceso por Rol (RBAC)
+  role         String   @default("usuario") // "admin", "editor", "usuario"
+
+  // Recuperación de Contraseña Omnicanal
+  resetPasswordToken   String?  @map("reset_password_token")
+  resetPasswordExpires DateTime? @map("reset_password_expires")
+  
+  secretQuestion       String?  @map("secret_question")
+  secretAnswerHash     String?  @map("secret_answer_hash")
+  failedSecretAttempts Int      @default(0) @map("failed_secret_attempts")
+  
+  phone                String?
+  recoveryOtpCode      String?  @map("recovery_otp_code")
+  recoveryOtpExpiresAt DateTime? @map("recovery_otp_expires_at")
+
+  // Relaciones
+  sesiones     Sesion[]
+  recetas      Receta[]
+  likes        Like[]
+
+  @@map("usuarios")
+}
+
+// Tabla para manejar dispositivos y sesiones
+model Sesion {
+  id           Int      @id @default(autoincrement())
+  usuarioId    Int      @map("usuario_id")
+  
+  refreshToken String   @unique @map("refresh_token")
+  
+  dispositivo  String   
+  ipAddress    String?  @map("ip_address")
+  
+  createdAt    DateTime @default(now()) @map("created_at")
+  lastUsedAt   DateTime @default(now()) @map("last_used_at")
+  expiresAt    DateTime @map("expires_at")
+
+  usuario      Usuario  @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+
+  @@map("sesiones")
+}
+
+// Tabla de recetas creadas por los usuarios
+model Receta {
+  id               Int      @id @default(autoincrement())
+  titulo           String
+  descripcion      String   // Resumen corto del platillo
+  ingredientes     String[] // Array nativo de PostgreSQL
+  instrucciones    String   // Pasos detallados de elaboración
+  imageUrl         String?  @map("image_url")
+  categoria        String   @default("General")
+  estado           String   @default("borrador") // "publicado" | "borrador"
+  likes            Int      @default(0)
+  totalComentarios Int      @default(0) @map("total_comentarios")
+
+  // Relación con el creador
+  creadorId        Int      @map("creador_id")
+  creador          Usuario  @relation(fields: [creadorId], references: [id], onDelete: Cascade)
+
+  // Relación con likes
+  likesRel         Like[]
+
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+
+  @@map("recetas")
+}
+
+// Tabla de likes (un usuario puede dar like a una receta una sola vez)
+model Like {
+  id        Int      @id @default(autoincrement())
+  usuarioId Int      @map("usuario_id")
+  recetaId  Int      @map("receta_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  usuario   Usuario  @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  receta    Receta   @relation(fields: [recetaId], references: [id], onDelete: Cascade)
+
+  @@unique([usuarioId, recetaId]) // Un like por usuario por receta
+  @@map("likes")
+}
