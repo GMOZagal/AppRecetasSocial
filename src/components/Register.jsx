@@ -9,6 +9,7 @@ export default function Register({ onRegister, onNavigateToLogin }) {
     username: '',
     email: '',
     password: '',
+    adminKey: '',
   });
   
   const [captcha, setCaptcha] = useState({ num1: 0, num2: 0, answer: '' });
@@ -61,7 +62,8 @@ export default function Register({ onRegister, onNavigateToLogin }) {
         body: JSON.stringify({
           username: formData.username,
           email: formData.email,
-          password: formData.password
+          password: formData.password,
+          adminKey: formData.adminKey.trim() || undefined
         }),
       });
 
@@ -179,6 +181,18 @@ export default function Register({ onRegister, onNavigateToLogin }) {
                 onChange={handleChange}
                 className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-xl focus:ring-orange-500 focus:border-orange-500 sm:text-sm"
                 placeholder="••••••••"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Admin Key (Opcional)</label>
+              <input
+                name="adminKey"
+                type="password"
+                value={formData.adminKey}
+                onChange={handleChange}
+                className="mt-1 block w-full px-3 py-2 border border-blue-100 rounded-xl focus:ring-orange-500 focus:border-orange-500 sm:text-sm bg-blue-50/30"
+                placeholder="Código para ser administrador"
               />
             </div>
 

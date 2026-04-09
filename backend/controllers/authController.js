@@ -56,10 +56,19 @@ const createSessionRecord = async (req, userId, refreshToken) => {
 
 export const register = async (req, res) => {
   try {
-    const { username, email, password } = req.body;
+    const { username, email, password, adminKey } = req.body;
 
     if (!username || !email || !password) {
       return res.status(400).json({ error: 'Todos los campos son obligatorios' });
+    }
+
+    let role = 'usuario';
+    if (adminKey) {
+      if (adminKey === process.env.ADMIN_REGISTRATION_KEY) {
+        role = 'admin';
+      } else {
+        return res.status(400).json({ error: 'Clave de administrador incorrecta' });
+      }
     }
 
     const existingUser = await prisma.usuario.findFirst({
@@ -72,7 +81,7 @@ export const register = async (req, res) => {
 
     const passwordHash = await bcrypt.hash(password, 10);
     const newUser = await prisma.usuario.create({
-      data: { username, email, passwordHash }
+      data: { username, email, passwordHash, role }
     });
 
     const { accessToken, refreshToken } = generateTokens(newUser);
