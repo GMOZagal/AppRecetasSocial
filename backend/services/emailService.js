@@ -1,20 +1,26 @@
-import { Resend } from 'resend';
+import nodemailer from 'nodemailer';
 import dotenv from 'dotenv';
 dotenv.config();
 
-const resend = new Resend(process.env.API_KEY_RESEND);
+// Configuración de Nodemailer usando Gmail SMTP
+const transporter = nodemailer.createTransport({
+  service: 'gmail',
+  auth: {
+    user: process.env.GMAIL_USER, // Tu correo de Gmail
+    pass: process.env.GMAIL_PASS  // La contraseña de aplicación de 16 caracteres
+  }
+});
 
-// Usamos onboarding de Resend como remitente de prueba, en un escenario real sería desde tu propio dominio.
-const FROM_EMAIL = 'Equipo de Seguridad <onboarding@resend.dev>';
+const FROM_EMAIL = `"Equipo de Seguridad - App Recetas" <${process.env.GMAIL_USER}>`;
 
 /**
  * Envia el OTP para Autenticación de Múltiples Factores
  */
 export const sendMfaEmail = async (toEmail, otpCode) => {
   try {
-    const data = await resend.emails.send({
+    const mailOptions = {
       from: FROM_EMAIL,
-      to: [toEmail],
+      to: toEmail,
       subject: 'Tu código de acceso - App de Recetas',
       html: `
         <div style="font-family: Arial, sans-serif; padding: 20px; color: #333;">
@@ -28,13 +34,13 @@ export const sendMfaEmail = async (toEmail, otpCode) => {
           <p>Saludos,<br>El equipo de App Recetas Sociales</p>
         </div>
       `
-    });
+    };
 
-    console.log(`[EmailService] OTP Enviado exitosamente a ${toEmail} | ID:`, data.id);
-    return { success: true, data };
+    const info = await transporter.sendMail(mailOptions);
+    console.log(`[EmailService] OTP Enviado exitosamente a ${toEmail} | ID:`, info.messageId);
+    return { success: true, data: info };
   } catch (error) {
     console.error(`[EmailService] Error enviando OTP a ${toEmail}:`, error);
-    // No lanzamos el error para no crashear, solo devolvemos falso.
     return { success: false, error };
   }
 };
@@ -44,10 +50,9 @@ export const sendMfaEmail = async (toEmail, otpCode) => {
  */
 export const sendPasswordResetEmail = async (toEmail, resetToken) => {
   try {
-    // Al no estar conectado a un front, enviaremos el token como un código para copiar/pegar temporalmente
-    const data = await resend.emails.send({
+    const mailOptions = {
       from: FROM_EMAIL,
-      to: [toEmail],
+      to: toEmail,
       subject: 'Recuperación de Contraseña - App de Recetas',
       html: `
         <div style="font-family: Arial, sans-serif; padding: 20px; color: #333;">
@@ -62,10 +67,11 @@ export const sendPasswordResetEmail = async (toEmail, resetToken) => {
           <p>Saludos,<br>El equipo de App Recetas Sociales</p>
         </div>
       `
-    });
+    };
 
-    console.log(`[EmailService] Enlace de recuperación enviado a ${toEmail} | ID:`, data.id);
-    return { success: true, data };
+    const info = await transporter.sendMail(mailOptions);
+    console.log(`[EmailService] Enlace de recuperación enviado a ${toEmail} | ID:`, info.messageId);
+    return { success: true, data: info };
   } catch (error) {
     console.error(`[EmailService] Error enviando token de recuperación a ${toEmail}:`, error);
     return { success: false, error };
