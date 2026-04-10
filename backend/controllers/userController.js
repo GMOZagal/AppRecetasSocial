@@ -175,3 +175,23 @@ export const updateUserRole = async (req, res) => {
     res.status(500).json({ error: 'Error interno del servidor' });
   }
 };
+
+export const deleteUser = async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    // Evitar que el admin se borre a sí mismo accidentalmente
+    if (req.user.id === parseInt(id)) {
+      return res.status(403).json({ error: 'No puedes eliminar tu propia cuenta desde aquí' });
+    }
+
+    await prisma.usuario.delete({
+      where: { id: parseInt(id) }
+    });
+    
+    res.status(200).json({ message: 'Usuario eliminado exitosamente' });
+  } catch (error) {
+    console.error('Error al eliminar usuario:', error);
+    res.status(500).json({ error: 'Error interno del servidor al eliminar usuario' });
+  }
+};

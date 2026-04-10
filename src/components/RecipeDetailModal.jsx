@@ -8,7 +8,7 @@ import { useMountTransition } from '../hooks/useMountTransition';
 const avatarUrl = (username) =>
   `https://i.pravatar.cc/150?u=${encodeURIComponent(username || 'user')}`;
 
-export default function RecipeDetailModal({ receta, isOpen, onClose, onLike, likedByMe }) {
+export default function RecipeDetailModal({ receta, isOpen, onClose, onLike, likedByMe, userRole = 'usuario', onDelete }) {
   const hasTransitionedIn = useMountTransition(isOpen, 300);
   if (!isOpen && !hasTransitionedIn) return null;
 
@@ -178,12 +178,23 @@ export default function RecipeDetailModal({ receta, isOpen, onClose, onLike, lik
               {receta?.totalComentarios ?? 0} comentarios
             </span>
           </div>
-          <button
-            onClick={onClose}
-            className="px-5 py-2 rounded-xl text-sm font-medium text-gray-600 hover:bg-gray-200 transition-colors"
-          >
-            Cerrar
-          </button>
+          <div className="flex items-center gap-3">
+            {(userRole === 'admin' || userRole === 'editor') && (
+              <button
+                onClick={() => onDelete(receta.id)}
+                className="px-4 py-2 rounded-xl text-sm font-medium text-red-600 border border-red-200 hover:bg-red-50 transition-colors shadow-sm"
+                title="Eliminar post por infracción"
+              >
+                Ocultar / Eliminar
+              </button>
+            )}
+            <button
+              onClick={onClose}
+              className="px-5 py-2 rounded-xl text-sm font-medium text-gray-600 hover:bg-gray-200 transition-colors"
+            >
+              Cerrar
+            </button>
+          </div>
         </div>
 
       </div>

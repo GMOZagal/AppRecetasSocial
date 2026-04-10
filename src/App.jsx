@@ -480,7 +480,7 @@ export default function App() {
             )}
           </>
         ) : currentTab === 'comunidad' ? (
-          <CommunityDashboard />
+          <CommunityDashboard userRole={userRole} />
         ) : currentTab === 'admin' && userRole === 'admin' ? (
           <AdminDashboard currentUser={authenticatedUser} />
         ) : (

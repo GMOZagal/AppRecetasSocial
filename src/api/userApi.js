@@ -99,6 +99,12 @@ export const updateUserRole = async (userId, role) => {
   });
 };
 
+export const deleteUsuario = async (userId) => {
+  return fetchWithAuth(`${BASE_URL}/${userId}`, {
+    method: 'DELETE'
+  });
+};
+
 export const setupSecurityOptions = async (data) => {
   return fetchWithAuth(`${API_HOST}/api/recovery/setup`, {
     method: 'PUT',

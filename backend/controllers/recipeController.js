@@ -159,7 +159,9 @@ export const eliminarReceta = async (req, res) => {
 
     const receta = await prisma.receta.findUnique({ where: { id: Number(id) } });
     if (!receta) return res.status(404).json({ error: 'Receta no encontrada.' });
-    if (receta.creadorId !== usuarioId) {
+    
+    // Check permissions: Owner, Admin, or Editor
+    if (receta.creadorId !== usuarioId && req.user.role !== 'admin' && req.user.role !== 'editor') {
       return res.status(403).json({ error: 'No tienes permiso para eliminar esta receta.' });
     }
 

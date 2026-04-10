@@ -9,13 +9,13 @@ import { debounce } from '../utils/debounce';
 import { usePolling } from '../hooks/usePolling';
 import { eventBus } from '../utils/eventBus';
 import { EVENTS } from './GlobalToast';
-import { toggleLike } from '../api/recipeApi';
+import { toggleLike, eliminarReceta } from '../api/recipeApi';
 import RecipeDetailModal from './RecipeDetailModal';
 
 const avatarUrl = (username) =>
   `https://i.pravatar.cc/150?u=${encodeURIComponent(username)}`;
 
-export default function CommunityDashboard() {
+export default function CommunityDashboard({ userRole = 'usuario' }) {
   const { recetas, isLoading, error, refreshData, checkForNewRecetas } = useCommunityData();
 
   const [searchTerm, setSearchTerm] = useState('');
@@ -83,6 +83,18 @@ export default function CommunityDashboard() {
     } catch {
       // Revertir si falla
       setLikeState(prev => ({ ...prev, [id]: current }));
+    }
+  };
+
+  const handleDeleteRecipe = async (id) => {
+    if (!window.confirm('¿Estás seguro de que quieres eliminar este post de la comunidad? (Acción de moderación)')) return;
+    try {
+      await eliminarReceta(id);
+      eventBus.publish(EVENTS.SHOW_TOAST, { message: 'Receta eliminada correctamente', type: 'success' });
+      setSelectedReceta(null);
+      refreshData();
+    } catch (err) {
+      eventBus.publish(EVENTS.SHOW_TOAST, { message: err.message || 'Error al eliminar', type: 'error' });
     }
   };
 
@@ -371,6 +383,8 @@ export default function CommunityDashboard() {
         onClose={() => setSelectedReceta(null)}
         onLike={handleLike}
         likedByMe={selectedReceta ? (likeState[selectedReceta.id]?.liked ?? false) : false}
+        userRole={userRole}
+        onDelete={handleDeleteRecipe}
       />
     </div>
   );

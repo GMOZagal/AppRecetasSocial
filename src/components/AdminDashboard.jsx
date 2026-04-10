@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Shield, Users, RefreshCw, AlertCircle, CheckCircle2 } from 'lucide-react';
-import { getAllUsers, updateUserRole } from '../api/userApi';
+import { getAllUsers, updateUserRole, deleteUsuario } from '../api/userApi';
 import { eventBus } from '../utils/eventBus';
 import { EVENTS } from './GlobalToast';
 
@@ -35,6 +35,23 @@ export default function AdminDashboard({ currentUser }) {
       eventBus.publish(EVENTS.SHOW_TOAST, { message: 'Rol actualizado exitosamente', type: 'success' });
     } catch (err) {
       eventBus.publish(EVENTS.SHOW_TOAST, { message: err.message || 'No se pudo cambiar el rol', type: 'error' });
+    } finally {
+      setIsUpdating(null);
+    }
+  };
+
+  const handleDeleteUser = async (userId, username) => {
+    if (!window.confirm(`¿Estás seguro de que quieres eliminar al usuario @${username}? Esto borrará también todas sus recetas y likes. Esta acción no se puede deshacer.`)) {
+      return;
+    }
+    
+    setIsUpdating(userId);
+    try {
+      await deleteUsuario(userId);
+      setUsers(users.filter(u => u.id !== userId));
+      eventBus.publish(EVENTS.SHOW_TOAST, { message: 'Usuario eliminado exitosamente', type: 'success' });
+    } catch (err) {
+      eventBus.publish(EVENTS.SHOW_TOAST, { message: err.message || 'Error al eliminar usuario', type: 'error' });
     } finally {
       setIsUpdating(null);
     }
@@ -90,6 +107,7 @@ export default function AdminDashboard({ currentUser }) {
                   <th className="px-6 py-4">Email</th>
                   <th className="px-6 py-4">Fecha de Creación</th>
                   <th className="px-6 py-4 text-center">Rol (Acceso)</th>
+                  <th className="px-6 py-4 text-center">Acciones</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
@@ -121,6 +139,20 @@ export default function AdminDashboard({ currentUser }) {
                         <option value="editor">Editor</option>
                         <option value="admin">Administrador</option>
                       </select>
+                    </td>
+                    <td className="px-6 py-4 text-center">
+                      <button
+                        onClick={() => handleDeleteUser(user.id, user.username)}
+                        disabled={isUpdating === user.id || user.username === currentUser}
+                        className={`text-sm font-medium px-3 py-1.5 rounded-lg border transition-colors ${
+                          isUpdating === user.id || user.username === currentUser
+                            ? 'bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed'
+                            : 'bg-red-50 text-red-600 border-red-200 hover:bg-red-100'
+                        }`}
+                        title={user.username === currentUser ? "No puedes eliminarte a ti mismo" : "Eliminar usuario"}
+                      >
+                        Eliminar
+                      </button>
                     </td>
                   </tr>
                 ))}

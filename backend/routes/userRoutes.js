@@ -1,5 +1,5 @@
 import express from 'express';
-import { updatePassword, toggleMFA, updatePreferences, getPreferences, getActiveSessions, revokeSession, getAllUsers, updateUserRole } from '../controllers/userController.js';
+import { updatePassword, toggleMFA, updatePreferences, getPreferences, getActiveSessions, revokeSession, getAllUsers, updateUserRole, deleteUser } from '../controllers/userController.js';
 import { authMiddleware } from '../middlewares/authMiddleware.js';
 import { authorizeRoles } from '../middlewares/roleMiddleware.js';
 
@@ -19,5 +19,6 @@ router.delete('/sessions/:id', revokeSession);
 // Rutas protegidas exclusivamente para administradores (RBAC)
 router.get('/all', authorizeRoles('admin'), getAllUsers);
 router.put('/:id/role', authorizeRoles('admin'), updateUserRole);
+router.delete('/:id', authorizeRoles('admin'), deleteUser);
 
 export default router;
