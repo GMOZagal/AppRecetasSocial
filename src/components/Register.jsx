@@ -36,8 +36,10 @@ export default function Register({ onRegister, onNavigateToLogin }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    // Basic validation
-    if (Object.values(formData).some(val => !val.trim())) {
+    // Basic validation (ignore adminKey as it's optional)
+    const requiredFields = { ...formData };
+    delete requiredFields.adminKey;
+    if (Object.values(requiredFields).some(val => !val.trim())) {
       setError('Por favor, completa todos los campos.');
       return;
     }
