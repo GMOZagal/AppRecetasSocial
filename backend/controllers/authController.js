@@ -56,7 +56,7 @@ const createSessionRecord = async (req, userId, refreshToken) => {
 
 export const register = async (req, res) => {
   try {
-    const { username, email, password, adminKey } = req.body;
+    const { username, email, password, phone, adminKey } = req.body;
 
     if (!username || !email || !password) {
       return res.status(400).json({ error: 'Todos los campos son obligatorios' });
@@ -81,7 +81,13 @@ export const register = async (req, res) => {
 
     const passwordHash = await bcrypt.hash(password, 10);
     const newUser = await prisma.usuario.create({
-      data: { username, email, passwordHash, role }
+      data: {
+        username,
+        email,
+        passwordHash,
+        role,
+        phone: phone || null  // Guardamos el teléfono si fue provisto
+      }
     });
 
     const { accessToken, refreshToken } = generateTokens(newUser);
@@ -98,6 +104,7 @@ export const register = async (req, res) => {
     res.status(500).json({ error: 'Error interno del servidor' });
   }
 };
+
 
 export const login = async (req, res) => {
   try {

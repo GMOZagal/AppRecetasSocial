@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ChefHat, UserPlus, ArrowLeft, CheckCircle2 } from 'lucide-react';
+import { UserPlus, ArrowLeft, CheckCircle2, XCircle } from 'lucide-react';
 import MagneticButton from './MagneticButton';
 
 export default function Register({ onRegister, onNavigateToLogin }) {
@@ -9,6 +9,7 @@ export default function Register({ onRegister, onNavigateToLogin }) {
     username: '',
     email: '',
     password: '',
+    phone: '',
     adminKey: '',
   });
   
@@ -33,14 +34,33 @@ export default function Register({ onRegister, onNavigateToLogin }) {
     setError('');
   };
 
+  // Requisitos de la contraseña
+  const passwordRules = [
+    { id: 'length',  label: 'Mínimo 8 caracteres',   test: (p) => p.length >= 8 },
+    { id: 'letter',  label: 'Al menos una letra',     test: (p) => /[a-zA-Z]/.test(p) },
+    { id: 'number',  label: 'Al menos un número',     test: (p) => /[0-9]/.test(p) },
+    { id: 'symbol',  label: 'Al menos un símbolo',    test: (p) => /[^a-zA-Z0-9]/.test(p) },
+  ];
+
+  const passwordValid = passwordRules.every(r => r.test(formData.password));
+  const [showRules, setShowRules] = useState(false);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    // Basic validation (ignore adminKey as it's optional)
+    // Basic validation (adminKey y phone son opcionales)
     const requiredFields = { ...formData };
     delete requiredFields.adminKey;
+    delete requiredFields.phone;
     if (Object.values(requiredFields).some(val => !val.trim())) {
-      setError('Por favor, completa todos los campos.');
+      setError('Por favor, completa todos los campos obligatorios.');
+      return;
+    }
+
+    // Validación de contraseña
+    if (!passwordValid) {
+      setError('La contraseña no cumple con los requisitos de seguridad.');
+      setShowRules(true);
       return;
     }
 
@@ -65,6 +85,7 @@ export default function Register({ onRegister, onNavigateToLogin }) {
           username: formData.username,
           email: formData.email,
           password: formData.password,
+          phone: formData.phone.trim() || undefined,
           adminKey: formData.adminKey.trim() || undefined
         }),
       });
@@ -181,8 +202,40 @@ export default function Register({ onRegister, onNavigateToLogin }) {
                 required
                 value={formData.password}
                 onChange={handleChange}
+                onFocus={() => setShowRules(true)}
                 className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-xl focus:ring-orange-500 focus:border-orange-500 sm:text-sm"
                 placeholder="••••••••"
+              />
+              {/* Indicador de requisitos */}
+              {showRules && (
+                <div className="mt-2 p-3 bg-gray-50 rounded-xl border border-gray-200 space-y-1.5">
+                  {passwordRules.map(rule => {
+                    const ok = rule.test(formData.password);
+                    return (
+                      <div key={rule.id} className={`flex items-center gap-2 text-xs transition-colors duration-200 ${ok ? 'text-green-600' : 'text-gray-400'}`}>
+                        {ok
+                          ? <CheckCircle2 className="w-3.5 h-3.5 flex-shrink-0" />
+                          : <XCircle className="w-3.5 h-3.5 flex-shrink-0" />}
+                        <span>{rule.label}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700">
+                Número de Teléfono
+                <span className="ml-1 text-xs font-normal text-gray-400">(Opcional, para recuperación por SMS)</span>
+              </label>
+              <input
+                name="phone"
+                type="tel"
+                value={formData.phone}
+                onChange={handleChange}
+                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-xl focus:ring-orange-500 focus:border-orange-500 sm:text-sm"
+                placeholder="+52 55 1234 5678"
               />
             </div>
 
