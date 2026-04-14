@@ -2,16 +2,20 @@ import nodemailer from 'nodemailer';
 import dotenv from 'dotenv';
 dotenv.config();
 
-// Configuración de Nodemailer usando Gmail SMTP
+// Usamos SMTP explícito con SSL en puerto 465.
+// NO usamos service:'gmail' porque ese modo (STARTTLS/puerto 587)
+// puede ser bloqueado por proveedores cloud como Render en plan gratuito.
 const transporter = nodemailer.createTransport({
-  service: 'gmail',
+  host: 'smtp.gmail.com',
+  port: 465,
+  secure: true, // SSL directo, nunca usa STARTTLS
   auth: {
-    user: process.env.GMAIL_USER, // Tu correo de Gmail
-    pass: process.env.GMAIL_PASS  // La contraseña de aplicación de 16 caracteres
+    user: process.env.GMAIL_USER,
+    pass: process.env.GMAIL_PASS  // Contraseña de aplicación de 16 caracteres
   }
 });
 
-const FROM_EMAIL = `"Equipo de Seguridad - App Recetas" <${process.env.GMAIL_USER}>`;
+const FROM_EMAIL = `"App Recetas Sociales" <${process.env.GMAIL_USER}>`;
 
 /**
  * Envia el OTP para Autenticación de Múltiples Factores
@@ -40,13 +44,13 @@ export const sendMfaEmail = async (toEmail, otpCode) => {
     console.log(`[EmailService] OTP Enviado exitosamente a ${toEmail} | ID:`, info.messageId);
     return { success: true, data: info };
   } catch (error) {
-    console.error(`[EmailService] Error enviando OTP a ${toEmail}:`, error);
+    console.error(`[EmailService] Error enviando OTP a ${toEmail}:`, error.message);
     return { success: false, error };
   }
 };
 
 /**
- * Envia el enlace de recuperación de contraseña
+ * Envia el token de recuperación de contraseña
  */
 export const sendPasswordResetEmail = async (toEmail, resetToken) => {
   try {
@@ -58,12 +62,12 @@ export const sendPasswordResetEmail = async (toEmail, resetToken) => {
         <div style="font-family: Arial, sans-serif; padding: 20px; color: #333;">
           <h2 style="color: #f44336;">Recuperación de Contraseña</h2>
           <p>Hola,</p>
-          <p>Has solicitado restablecer tu contraseña. Para continuar, utiliza este token de seguridad temporal en tu aplicación:</p>
+          <p>Has solicitado restablecer tu contraseña. Usa este token en la aplicación:</p>
           <div style="background-color: #f4f4f4; padding: 15px; font-family: monospace; word-break: break-all; text-align: center; border-radius: 5px; margin: 20px 0;">
             ${resetToken}
           </div>
           <p>Este token expira en 15 minutos por tu seguridad.</p>
-          <p>Si no has solicitado este cambio, tu cuenta sigue estando segura y puedes ignorar este correo.</p>
+          <p>Si no has solicitado este cambio, ignora este correo.</p>
           <p>Saludos,<br>El equipo de App Recetas Sociales</p>
         </div>
       `
@@ -73,7 +77,7 @@ export const sendPasswordResetEmail = async (toEmail, resetToken) => {
     console.log(`[EmailService] Enlace de recuperación enviado a ${toEmail} | ID:`, info.messageId);
     return { success: true, data: info };
   } catch (error) {
-    console.error(`[EmailService] Error enviando token de recuperación a ${toEmail}:`, error);
+    console.error(`[EmailService] Error enviando token de recuperación a ${toEmail}:`, error.message);
     return { success: false, error };
   }
 };

@@ -14,7 +14,7 @@ app.set('trust proxy', 1); // Necesario para que rate-limit funcione bien detrá
 // Middlewares
 app.use(cors({
   origin: function (origin, callback) {
-    if (!origin || origin.includes('localhost') || origin.includes('vercel.app')) {
+    if (!origin || origin.includes('localhost') || origin.includes('127.0.0.1') || origin.includes('vercel.app')) {
       callback(null, true);
     } else {
       callback(new Error('Origen no permitido por CORS'));
