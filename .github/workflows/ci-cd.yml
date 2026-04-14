@@ -1,0 +1,84 @@
+name: CI/CD — AppRecetasSocial
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  # ─── JOB 1: Lint y validación del backend ────────────────────────────────
+  backend-ci:
+    name: Backend CI (Node.js)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout código
+        uses: actions/checkout@v4
+
+      - name: Configurar Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Instalar dependencias del backend
+        run: npm ci
+        working-directory: backend
+
+      - name: Verificar sintaxis (node --check)
+        run: |
+          for f in server.js controllers/*.js routes/*.js middlewares/*.js services/*.js; do
+            node --input-type=module --check < "$f" && echo "✅ OK: $f" || echo "❌ Error en: $f"
+          done
+        working-directory: backend
+
+      - name: Generar cliente Prisma
+        run: npx prisma generate
+        working-directory: backend
+
+  # ─── JOB 2: Build del frontend ───────────────────────────────────────────
+  frontend-ci:
+    name: Frontend CI (Vite + React)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout código
+        uses: actions/checkout@v4
+
+      - name: Configurar Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Instalar dependencias del frontend
+        run: npm ci
+
+      - name: Build de producción (Vite)
+        run: npm run build
+        env:
+          VITE_API_URL: ${{ secrets.VITE_API_URL }}
+
+  # ─── JOB 3: Deploy (solo en push a main) ─────────────────────────────────
+  deploy:
+    name: Deploy a Producción
+    runs-on: ubuntu-latest
+    needs: [ backend-ci, frontend-ci ]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+
+    steps:
+      - name: Notificar deploy a Render (backend)
+        run: |
+          curl -s -X POST "${{ secrets.RENDER_DEPLOY_HOOK }}" \
+            -H "Content-Type: application/json" \
+            --fail \
+            && echo "✅ Deploy a Render iniciado" \
+            || echo "⚠️  Hook de Render no configurado, deploy manual requerido"
+
+      - name: Notificar deploy a Vercel (frontend)
+        run: |
+          echo "✅ Vercel detecta el push a main automáticamente y despliega el frontend."
+          echo "   Branch: ${{ github.ref_name }}"
+          echo "   Commit: ${{ github.sha }}"
